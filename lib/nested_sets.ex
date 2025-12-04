@@ -93,46 +93,41 @@ defmodule NestedSets do
           {:ok, ns_node()} | {:error, term() | Ecto.Changeset.t()}
   def make_root(repo, node) do
     cfg = config(node)
-    schema = node.__struct__
 
     repo.transact(fn ->
-      if cfg.tree == false do
-        exists? =
-          repo.exists?(from n in schema, where: field(n, ^cfg.lft) == 1)
-
-        if exists? do
-          repo.rollback(:root_already_exists)
-        end
+      with :ok <- validate_single_root(repo, node, cfg),
+           {:ok, inserted} <- insert_root_node(repo, node, cfg) do
+        {:ok, maybe_set_tree_id(repo, inserted, cfg)}
       end
-
-      changeset =
-        node
-        |> Ecto.Changeset.change(%{
-          cfg.lft => 1,
-          cfg.rgt => 2,
-          cfg.depth => 0
-        })
-
-      {:ok, inserted} = repo.insert(changeset)
-
-      # set tree_id when multi-tree mode enabled, TODO: improve
-      final_node =
-        if cfg.tree != false do
-          pk = get_primary_key(inserted)
-
-          {1, _} =
-            repo.update_all(
-              from(n in schema, where: n.id == ^pk),
-              set: [{cfg.tree, pk}]
-            )
-
-          repo.get!(schema, pk)
-        else
-          inserted
-        end
-
-      {:ok, final_node}
     end)
+  end
+
+  defp validate_single_root(_repo, _node, %{tree: tree}) when tree != false, do: :ok
+
+  defp validate_single_root(repo, node, cfg) do
+    exists? = repo.exists?(from n in node.__struct__, where: field(n, ^cfg.lft) == 1)
+    if exists?, do: repo.rollback(:root_already_exists), else: :ok
+  end
+
+  defp insert_root_node(repo, node, cfg) do
+    node
+    |> Ecto.Changeset.change(%{cfg.lft => 1, cfg.rgt => 2, cfg.depth => 0})
+    |> repo.insert()
+  end
+
+  defp maybe_set_tree_id(_repo, node, %{tree: false}), do: node
+
+  defp maybe_set_tree_id(repo, node, cfg) do
+    schema = node.__struct__
+    pk = get_primary_key(node)
+
+    {1, _} =
+      repo.update_all(
+        from(n in schema, where: n.id == ^pk),
+        set: [{cfg.tree, pk}]
+      )
+
+    repo.get!(schema, pk)
   end
 
   @doc """
@@ -221,43 +216,45 @@ defmodule NestedSets do
   """
   @spec delete_node(Ecto.Repo.t(), ns_node()) :: {:ok, ns_node()} | {:error, term()}
   def delete_node(repo, node) do
-    cfg = config(node)
-
     if root?(node) do
       {:error, :cannot_delete_root}
     else
-      schema = node.__struct__
-
-      repo.transact(fn ->
-        refreshed = repo.reload!(node)
-        lft = Map.get(refreshed, cfg.lft)
-        rgt = Map.get(refreshed, cfg.rgt)
-
-        deleted = repo.delete!(refreshed)
-
-        # if it has children, shift them up/left to fill the parent's shell
-        if rgt - lft > 1 do
-          query =
-            from(n in schema,
-              where: field(n, ^cfg.lft) > ^lft and field(n, ^cfg.rgt) < ^rgt
-            )
-            |> apply_tree_condition(refreshed, cfg)
-
-          repo.update_all(query,
-            inc: [
-              {cfg.lft, -1},
-              {cfg.rgt, -1},
-              {cfg.depth, -1}
-            ]
-          )
-        end
-
-        # close the gap (width of 2 for the single node deleted)
-        shift_left_right(repo, refreshed, rgt + 1, -2, cfg)
-
-        {:ok, deleted}
-      end)
+      do_delete_node(repo, node)
     end
+  end
+
+  defp do_delete_node(repo, node) do
+    cfg = config(node)
+
+    repo.transact(fn ->
+      refreshed = repo.reload!(node)
+      lft = Map.get(refreshed, cfg.lft)
+      rgt = Map.get(refreshed, cfg.rgt)
+
+      deleted = repo.delete!(refreshed)
+
+      # if it has children, shift them up/left to fill the parent's shell
+      if rgt - lft > 1 do
+        query =
+          from(n in node.__struct__,
+            where: field(n, ^cfg.lft) > ^lft and field(n, ^cfg.rgt) < ^rgt
+          )
+          |> apply_tree_condition(refreshed, cfg)
+
+        repo.update_all(query,
+          inc: [
+            {cfg.lft, -1},
+            {cfg.rgt, -1},
+            {cfg.depth, -1}
+          ]
+        )
+      end
+
+      # close the gap (width of 2 for the single node deleted)
+      shift_left_right(repo, refreshed, rgt + 1, -2, cfg)
+
+      {:ok, deleted}
+    end)
   end
 
   @doc """

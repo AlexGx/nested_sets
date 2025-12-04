@@ -25,7 +25,7 @@ end
 defmodule NestedSets.Test.Repos do
   @moduledoc false
 
-  alias NestedSets.Test.{Repo, SqliteRepo, MysqlRepo}
+  alias NestedSets.Test.{MysqlRepo, Repo, SqliteRepo}
 
   @type repo_config :: {atom(), module(), keyword()}
 

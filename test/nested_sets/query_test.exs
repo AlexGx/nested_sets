@@ -1,8 +1,8 @@
 defmodule NestedSets.QueryTest do
   use NestedSets.Case, async: true
 
-  alias NestedSets.Test.Repos
   alias NestedSets.Query
+  alias NestedSets.Test.Repos
   alias NestedSets.Test.Schemas.{Category, CategoryWithTree}
 
   describe "single tree queries" do

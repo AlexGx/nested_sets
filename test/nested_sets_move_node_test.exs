@@ -3,7 +3,7 @@ defmodule NestedSets.MoveNodeTest do
   import Ecto.Query
 
   alias NestedSets.Test.Repos
-  alias NestedSets.Test.Schemas.{Category}
+  alias NestedSets.Test.Schemas.Category
 
   setup %{repo: repo} do
     repo.delete_all(Category)

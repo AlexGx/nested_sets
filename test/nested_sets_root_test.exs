@@ -3,9 +3,8 @@ defmodule NestedSetsRootTest do
 
   import NestedSets.Fixtures
 
-  alias NestedSets.Test.Schemas.{Category, CategoryWithTree}
-  alias NestedSets.Test.Schemas.DummyNotNested
   alias NestedSets.Test.Repos
+  alias NestedSets.Test.Schemas.{Category, CategoryWithTree, DummyNotNested}
 
   setup %{repo: repo} do
     repo.delete_all(Category)
