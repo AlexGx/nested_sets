@@ -10,8 +10,8 @@
   <a href="https://hexdocs.pm/nested_sets">
     <img src="https://img.shields.io/badge/docs-hexdocs-blue" alt="HexDocs">
   </a>
-  <a href="https://github.com/AlexGx/nested-sets/actions">
-    <img alt="CI Status" src="https://github.com/AlexGx/nested-sets/workflows/ci/badge.svg">
+  <a href="https://github.com/AlexGx/nested_sets/actions">
+    <img alt="CI Status" src="https://github.com/AlexGx/nested_sets/workflows/ci/badge.svg">
   </a>
 </p>
 
