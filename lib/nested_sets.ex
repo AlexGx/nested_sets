@@ -118,16 +118,15 @@ defmodule NestedSets do
   defp maybe_set_tree_id(_repo, node, %{tree: false}), do: node
 
   defp maybe_set_tree_id(repo, node, cfg) do
-    schema = node.__struct__
     pk = get_primary_key(node)
 
     {1, _} =
       repo.update_all(
-        from(n in schema, where: n.id == ^pk),
+        from(n in node.__struct__, where: n.id == ^pk),
         set: [{cfg.tree, pk}]
       )
 
-    repo.get!(schema, pk)
+    repo.get!(node.__struct__, pk)
   end
 
   @doc """
@@ -183,7 +182,6 @@ defmodule NestedSets do
   @spec delete_with_children(Ecto.Repo.t(), ns_node()) :: {:ok, integer()} | {:error, term()}
   def delete_with_children(repo, node) do
     cfg = config(node)
-    schema = node.__struct__
 
     repo.transact(fn ->
       refreshed = repo.reload!(node)
@@ -192,7 +190,7 @@ defmodule NestedSets do
       width = rgt - lft + 1
 
       query =
-        from(n in schema,
+        from(n in node.__struct__,
           where: field(n, ^cfg.lft) >= ^lft,
           where: field(n, ^cfg.rgt) <= ^rgt
         )
@@ -595,7 +593,6 @@ defmodule NestedSets do
   end
 
   defp move_node_as_root(repo, node, cfg) do
-    schema = node.__struct__
     old_tree = Map.get(node, cfg.tree)
     pk = get_primary_key(node)
 
@@ -607,7 +604,7 @@ defmodule NestedSets do
       width = rgt - lft + 1
 
       subtree_query =
-        from(n in schema,
+        from(n in node.__struct__,
           where: field(n, ^cfg.lft) >= ^lft,
           where: field(n, ^cfg.rgt) <= ^rgt,
           where: field(n, ^cfg.tree) == ^old_tree
@@ -624,7 +621,7 @@ defmodule NestedSets do
 
       for attr <- [cfg.lft, cfg.rgt] do
         close_query =
-          from(n in schema,
+          from(n in node.__struct__,
             where: field(n, ^attr) > ^rgt,
             where: field(n, ^cfg.tree) == ^old_tree
           )

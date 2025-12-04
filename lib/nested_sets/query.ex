@@ -41,7 +41,7 @@ defmodule NestedSets.Query do
   ## Options
     * `:depth` - limit to ancestors within N levels (optional)
   """
-  @spec ancestors(Ecto.Queryable.t(), ns_node(), keyword()) :: Ecto.Query.t() | nil
+  @spec ancestors(Ecto.Queryable.t(), ns_node(), keyword()) :: Ecto.Query.t()
   def ancestors(queryable, node, opts \\ []) do
     schema = get_schema(queryable)
     cfg = config(schema)
@@ -72,10 +72,7 @@ defmodule NestedSets.Query do
     apply_tree_filter(query, node, cfg)
   end
 
-  @doc """
-  Alias for `ancestors/3`.
-  """
-  @spec parents(Ecto.Queryable.t(), ns_node(), keyword()) :: Ecto.Query.t() | nil
+  @doc "Alias for `ancestors/3`."
   def parents(queryable, node, opts \\ []), do: ancestors(queryable, node, opts)
 
   @doc """
@@ -84,7 +81,7 @@ defmodule NestedSets.Query do
   ## Options
     * `:depth` - limit to descendants within N levels (optional)
   """
-  @spec descendants(Ecto.Queryable.t(), ns_node(), keyword()) :: Ecto.Query.t() | nil
+  @spec descendants(Ecto.Queryable.t(), ns_node(), keyword()) :: Ecto.Query.t()
   def descendants(queryable, node, opts \\ []) do
     schema = get_schema(queryable)
     cfg = config(schema)
@@ -115,22 +112,19 @@ defmodule NestedSets.Query do
     apply_tree_filter(query, node, cfg)
   end
 
-  @doc """
-  Alias for `descendants/3`.
-  """
-  @spec children(Ecto.Queryable.t(), ns_node(), keyword()) :: Ecto.Query.t() | nil
+  @doc "Alias for `descendants/3`."
   def children(queryable, node, opts \\ []), do: descendants(queryable, node, opts)
 
   @doc """
   Finds only direct children of a node (depth = 1).
   """
-  @spec direct_children(Ecto.Queryable.t(), struct()) :: Ecto.Query.t() | nil
+  @spec direct_children(Ecto.Queryable.t(), struct()) :: Ecto.Query.t()
   def direct_children(queryable, node), do: descendants(queryable, node, depth: 1)
 
   @doc """
   Finds all leaf nodes (nodes without children) under a node.
   """
-  @spec leaves(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t() | nil
+  @spec leaves(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t()
   def leaves(queryable, node) do
     schema = get_schema(queryable)
     cfg = config(schema)
@@ -152,7 +146,7 @@ defmodule NestedSets.Query do
   @doc """
   Finds the previous sibling of a node.
   """
-  @spec prev_sibling(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t() | nil
+  @spec prev_sibling(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t()
   def prev_sibling(queryable, node) do
     schema = get_schema(queryable)
     cfg = config(schema)
@@ -170,13 +164,13 @@ defmodule NestedSets.Query do
   @doc """
   Alias for `prev_sibling/2`.
   """
-  @spec prev(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t() | nil
+  @spec prev(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t()
   def prev(queryable, node), do: prev_sibling(queryable, node)
 
   @doc """
   Finds the next sibling of a node.
   """
-  @spec next_sibling(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t() | nil
+  @spec next_sibling(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t()
   def next_sibling(queryable, node) do
     schema = get_schema(queryable)
     cfg = config(schema)
@@ -191,16 +185,13 @@ defmodule NestedSets.Query do
     apply_tree_filter(query, node, cfg)
   end
 
-  @doc """
-  Alias for `next_sibling/2`.
-  """
-  @spec next(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t() | nil
+  @doc "Alias for `next_sibling/2`."
   def next(queryable, node), do: next_sibling(queryable, node)
 
   @doc """
   Finds all siblings of a node (nodes with the same parent).
   """
-  @spec siblings(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t() | nil
+  @spec siblings(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t()
   def siblings(queryable, node) do
     schema = get_schema(queryable)
     cfg = config(schema)
@@ -247,7 +238,7 @@ defmodule NestedSets.Query do
   @doc """
   Finds the root node for a specific tree (when using tree).
   """
-  @spec root(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t() | nil
+  @spec root(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t()
   def root(queryable, node) do
     schema = get_schema(queryable)
     cfg = config(schema)
@@ -264,7 +255,7 @@ defmodule NestedSets.Query do
   @doc """
   Gets a node and all its descendants (the full subtree including the node itself).
   """
-  @spec subtree(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t() | nil
+  @spec subtree(Ecto.Queryable.t(), ns_node()) :: Ecto.Query.t()
   def subtree(queryable, node) do
     schema = get_schema(queryable)
     cfg = config(schema)
@@ -300,13 +291,13 @@ defmodule NestedSets.Query do
   Filters by a specific tree (when using tree).
   Accepts either a tree_id integer or a node.
   """
-  @spec in_tree(Ecto.Queryable.t(), pos_integer() | ns_node()) :: Ecto.Query.t() | nil
+  @spec in_tree(Ecto.Queryable.t(), pos_integer() | ns_node()) :: Ecto.Query.t()
   def in_tree(queryable, tree_id) when is_integer(tree_id) do
     schema = get_schema(queryable)
     cfg = config(schema)
 
     if cfg.tree == false do
-      queryable
+      to_query(queryable)
     else
       from(n in queryable,
         where: field(n, ^cfg.tree) == ^tree_id
@@ -320,9 +311,12 @@ defmodule NestedSets.Query do
     apply_tree_filter(queryable, node, cfg)
   end
 
-  # Private section
+  # Helpers
 
-  defp apply_tree_filter(query, _node, %{tree: false} = _cfg), do: query
+  # ensure we always return a Query struct, even if passing through an atom
+  defp to_query(queryable), do: Ecto.Queryable.to_query(queryable)
+
+  defp apply_tree_filter(query, _node, %{tree: false} = _cfg), do: to_query(query)
 
   defp apply_tree_filter(query, node, %{tree: tree_attr} = _cfg) do
     tree_value = Map.get(node, tree_attr)
