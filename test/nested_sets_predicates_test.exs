@@ -47,6 +47,38 @@ defmodule NestedSets.PredicatesTest do
       end
 
       @tag db: db_type
+      test "descendant_of?/2 (#{db_type})", %{nodes: nodes} do
+        parent = nodes["Computers"]
+        child = nodes["Laptops"]
+        root = nodes["Electronics"]
+
+        # direct child
+        assert NestedSets.descendant_of?(child, parent)
+
+        # grandchild is technically a child/descendant
+        assert NestedSets.descendant_of?(child, root)
+
+        # reverse is false
+        refute NestedSets.descendant_of?(parent, child)
+
+        # sibling is false
+        sibling = nodes["Desktops"]
+        refute NestedSets.descendant_of?(child, sibling)
+      end
+
+      @tag db: db_type
+      test "descendant_of?/2 raise different schemas (#{db_type})", %{nodes: nodes} do
+        parent = nodes["Computers"]
+        child = %CategoryWithTree{name: "Child from other schema"}
+
+        assert_raise ArgumentError,
+                     ~r/^descendant_of\?\/2 expects both arguments to be structs of the same Schema/,
+                     fn ->
+                       NestedSets.descendant_of?(child, parent)
+                     end
+      end
+
+      @tag db: db_type
       test "child_of?/2 (#{db_type})", %{nodes: nodes} do
         parent = nodes["Computers"]
         child = nodes["Laptops"]
@@ -55,8 +87,8 @@ defmodule NestedSets.PredicatesTest do
         # direct child
         assert NestedSets.child_of?(child, parent)
 
-        # grandchild is technically a child/descendant
-        assert NestedSets.child_of?(child, root)
+        # grandchild is not a direct child
+        refute NestedSets.child_of?(child, root)
 
         # reverse is false
         refute NestedSets.child_of?(parent, child)
@@ -75,38 +107,6 @@ defmodule NestedSets.PredicatesTest do
                      ~r/^child_of\?\/2 expects both arguments to be structs of the same Schema/,
                      fn ->
                        NestedSets.child_of?(child, parent)
-                     end
-      end
-
-      @tag db: db_type
-      test "direct_child_of?/2 (#{db_type})", %{nodes: nodes} do
-        parent = nodes["Computers"]
-        child = nodes["Laptops"]
-        root = nodes["Electronics"]
-
-        # direct child
-        assert NestedSets.direct_child_of?(child, parent)
-
-        # grandchild is not a direct child
-        refute NestedSets.direct_child_of?(child, root)
-
-        # reverse is false
-        refute NestedSets.direct_child_of?(parent, child)
-
-        # sibling is false
-        sibling = nodes["Desktops"]
-        refute NestedSets.direct_child_of?(child, sibling)
-      end
-
-      @tag db: db_type
-      test "direct_child_of?/2 raise different schemas (#{db_type})", %{nodes: nodes} do
-        parent = nodes["Computers"]
-        child = %CategoryWithTree{name: "Child from other schema"}
-
-        assert_raise ArgumentError,
-                     ~r/^direct_child_of\?\/2 expects both arguments to be structs of the same Schema/,
-                     fn ->
-                       NestedSets.direct_child_of?(child, parent)
                      end
       end
 
@@ -168,6 +168,38 @@ defmodule NestedSets.PredicatesTest do
       end
 
       @tag db: db_type
+      test "descendant_of?/2 (#{db_type})", %{nodes: nodes} do
+        parent = nodes["Computers"]
+        child = nodes["Laptops"]
+        root = nodes["Electronics"]
+
+        # direct child
+        assert NestedSets.descendant_of?(child, parent)
+
+        # grandchild is technically a child/descendant
+        assert NestedSets.descendant_of?(child, root)
+
+        # reverse is false
+        refute NestedSets.descendant_of?(parent, child)
+
+        # sibling is false
+        sibling = nodes["Desktops"]
+        refute NestedSets.descendant_of?(child, sibling)
+      end
+
+      @tag db: db_type
+      test "descendant_of?/2 raise different schemas (#{db_type})", %{nodes: nodes} do
+        parent = nodes["Computers"]
+        child = %Category{name: "Child from other schema"}
+
+        assert_raise ArgumentError,
+                     ~r/^descendant_of\?\/2 expects both arguments to be structs of the same Schema/,
+                     fn ->
+                       NestedSets.descendant_of?(child, parent)
+                     end
+      end
+
+      @tag db: db_type
       test "child_of?/2 (#{db_type})", %{nodes: nodes} do
         parent = nodes["Computers"]
         child = nodes["Laptops"]
@@ -176,8 +208,8 @@ defmodule NestedSets.PredicatesTest do
         # direct child
         assert NestedSets.child_of?(child, parent)
 
-        # grandchild is technically a child/descendant
-        assert NestedSets.child_of?(child, root)
+        # grandchild is not a direct child
+        refute NestedSets.child_of?(child, root)
 
         # reverse is false
         refute NestedSets.child_of?(parent, child)
@@ -196,38 +228,6 @@ defmodule NestedSets.PredicatesTest do
                      ~r/^child_of\?\/2 expects both arguments to be structs of the same Schema/,
                      fn ->
                        NestedSets.child_of?(child, parent)
-                     end
-      end
-
-      @tag db: db_type
-      test "direct_child_of?/2 (#{db_type})", %{nodes: nodes} do
-        parent = nodes["Computers"]
-        child = nodes["Laptops"]
-        root = nodes["Electronics"]
-
-        # direct child
-        assert NestedSets.direct_child_of?(child, parent)
-
-        # grandchild is not a direct child
-        refute NestedSets.direct_child_of?(child, root)
-
-        # reverse is false
-        refute NestedSets.direct_child_of?(parent, child)
-
-        # sibling is false
-        sibling = nodes["Desktops"]
-        refute NestedSets.direct_child_of?(child, sibling)
-      end
-
-      @tag db: db_type
-      test "direct_child_of?/2 raise different schemas (#{db_type})", %{nodes: nodes} do
-        parent = nodes["Computers"]
-        child = %Category{name: "Child from other schema"}
-
-        assert_raise ArgumentError,
-                     ~r/^direct_child_of\?\/2 expects both arguments to be structs of the same Schema/,
-                     fn ->
-                       NestedSets.direct_child_of?(child, parent)
                      end
       end
 

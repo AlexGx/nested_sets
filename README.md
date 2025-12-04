@@ -1,5 +1,5 @@
 
-# NestedSets
+# NestedSets for Ecto
 
 ![NestedSets](https://raw.githubusercontent.com/AlexGx/nested_sets/master/artwork/banner.png)
 
@@ -15,7 +15,7 @@
   </a>
 </p>
 
-Battle-tested NestedSets behavior for Ecto that supports PostgreSQL, SQLite, and MySQL.
+Battle-tested NestedSets for Ecto that supports PostgreSQL, SQLite, and MySQL.
 
 TODO: about Ecto 3.12+, add to doc `depth` is also a `level`
 

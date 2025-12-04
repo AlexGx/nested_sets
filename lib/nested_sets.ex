@@ -106,7 +106,7 @@ defmodule NestedSets do
 
   defp validate_single_root(repo, node, cfg) do
     exists? = repo.exists?(from n in node.__struct__, where: field(n, ^cfg.lft) == 1)
-    if exists?, do: repo.rollback(:root_already_exists), else: :ok
+    if exists?, do: {:error, :root_already_exists}, else: :ok
   end
 
   defp insert_root_node(repo, node, cfg) do
@@ -303,13 +303,13 @@ defmodule NestedSets do
   @doc """
   Checks if node is a child/descendant of the potential parent.
   """
-  @spec child_of?(ns_node(), ns_node()) :: boolean()
-  def child_of?(node, potential_parent) do
+  @spec descendant_of?(ns_node(), ns_node()) :: boolean()
+  def descendant_of?(node, potential_parent) do
     cfg = config(node)
 
     if node.__struct__ != potential_parent.__struct__ do
       raise ArgumentError,
-            "child_of?/2 expects both arguments to be structs of the same Schema, " <>
+            "descendant_of?/2 expects both arguments to be structs of the same Schema, " <>
               "got #{inspect(node.__struct__)} and #{inspect(potential_parent.__struct__)}"
     end
 
@@ -318,25 +318,25 @@ defmodule NestedSets do
     parent_lft = Map.get(potential_parent, cfg.lft)
     parent_rgt = Map.get(potential_parent, cfg.rgt)
 
-    is_descendant = node_lft > parent_lft && node_rgt < parent_rgt
+    descendant? = node_lft > parent_lft && node_rgt < parent_rgt
 
-    if is_descendant && cfg.tree != false do
+    if descendant? && cfg.tree != false do
       Map.get(node, cfg.tree) == Map.get(potential_parent, cfg.tree)
     else
-      is_descendant
+      descendant?
     end
   end
 
   @doc """
-  Checks if node is a direct child/descendant of the potential parent.
+  Checks if node is a direct child of the potential parent.
   """
-  @spec direct_child_of?(ns_node(), ns_node()) :: boolean()
-  def direct_child_of?(node, potential_parent) do
+  @spec child_of?(ns_node(), ns_node()) :: boolean()
+  def child_of?(node, potential_parent) do
     cfg = config(node)
 
     if node.__struct__ != potential_parent.__struct__ do
       raise ArgumentError,
-            "direct_child_of?/2 expects both arguments to be structs of the same Schema, " <>
+            "child_of?/2 expects both arguments to be structs of the same Schema, " <>
               "got #{inspect(node.__struct__)} and #{inspect(potential_parent.__struct__)}"
     end
 
@@ -352,11 +352,11 @@ defmodule NestedSets do
     parent_lft = Map.get(potential_parent, cfg.lft)
     parent_rgt = Map.get(potential_parent, cfg.rgt)
 
-    is_descendant? = node_lft > parent_lft && node_rgt < parent_rgt
+    descendant? = node_lft > parent_lft && node_rgt < parent_rgt
 
-    has_correct_depth? = Map.get(node, cfg.depth) == Map.get(potential_parent, cfg.depth) + 1
+    correct_depth? = Map.get(node, cfg.depth) == Map.get(potential_parent, cfg.depth) + 1
 
-    same_scope? && is_descendant? && has_correct_depth?
+    same_scope? && descendant? && correct_depth?
   end
 
   @doc """
@@ -644,7 +644,7 @@ defmodule NestedSets do
       get_primary_key(node) == get_primary_key(target) ->
         {:error, :cannot_move_to_itself}
 
-      child_of?(target, node) ->
+      descendant_of?(target, node) ->
         {:error, :cannot_move_to_descendant}
 
       position in [:before, :after] && root?(target) ->
