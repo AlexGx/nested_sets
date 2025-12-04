@@ -1,8 +1,6 @@
 defmodule NestedSetsRootTest do
   use NestedSets.Case, async: false
 
-  import NestedSets.Fixtures
-
   alias NestedSets.Test.Repos
   alias NestedSets.Test.Schemas.{Category, CategoryWithTree, DummyNotNested}
 
