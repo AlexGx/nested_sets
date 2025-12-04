@@ -1,0 +1,94 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+# env:
+#  CACHE_VERSION: v1
+#  PERSISTENT_CACHE_DIR: cached
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - tuple:
+              elixir: "1.16"
+              erlang: "26.2"
+              postgres: "15.8-alpine"
+          - tuple:
+              elixir: "1.18"
+              erlang: "27.3.2"
+              postgres: "15.8-alpine"
+
+    env:
+      MIX_ENV: test
+
+    services:
+      postgres:
+        image: postgres:${{ matrix.tuple.postgres }}
+        ports:
+          - 5434:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: mysql
+          MYSQL_DATABASE: nested_sets_test
+        options: >-
+          --health-cmd="mysqladmin ping -uroot -pmysql"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3307:3306
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ matrix.tuple.elixir }}
+          otp-version: ${{ matrix.tuple.erlang }}
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ matrix.tuple.elixir }}-${{ matrix.tuple.erlang }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ matrix.tuple.elixir }}-${{ matrix.tuple.erlang }}-
+
+      - run: mix deps.get --only $MIX_ENV
+
+      - run: mix format --check-formatted
+
+      - run: mix deps.compile
+
+      - run: mix compile --warnings-as-errors
+
+      - run: mix credo --strict
+
+      - run: mix test.setup
+        env:
+          MYSQL_URL: mysql://root:mysql@localhost:${{job.services.mysql.ports[3306]}}/nested_sets_test
+
+      - run: mix test
+        env:
+          MYSQL_URL: mysql://root:mysql@localhost:${{job.services.mysql.ports[3306]}}/nested_sets_test
+
+      - run: mix dialyzer
