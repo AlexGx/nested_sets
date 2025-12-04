@@ -5,9 +5,9 @@ on:
   push:
     branches: [master]
 
-# env:
-#  CACHE_VERSION: v1
-#  PERSISTENT_CACHE_DIR: cached
+env:
+  CACHE_VERSION: v1
+  PERSISTENT_CACHE_DIR: cached
 
 jobs:
   ci:

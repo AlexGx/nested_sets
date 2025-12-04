@@ -112,7 +112,7 @@ defmodule NestedSets.MixProject do
 
   defp description do
     """
-    Battle-tested NestedSets behavior for Ecto that supports PostgreSQL, SQLite, and MySQL.
+    Battle-tested NestedSets for Ecto that supports PostgreSQL, SQLite, and MySQL.
     """
   end
 end
