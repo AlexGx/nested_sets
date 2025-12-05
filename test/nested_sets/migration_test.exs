@@ -5,12 +5,12 @@ defmodule NestedSets.MigrationTest do
 
   alias NestedSets.Test.Repos
 
-  describe "nested_sets_fields/1" do
+  describe "nested_sets_columns/1" do
     for {db_type, repo, tags} <- Repos.list() do
       @describetag tags
 
       @tag db: db_type
-      test "creates basic nested set fields without tree (#{db_type})" do
+      test "creates basic nested set columns without tree (#{db_type})" do
         repo = unquote(repo)
         db_type = unquote(db_type)
         table = unique_table_name()
@@ -19,7 +19,7 @@ defmodule NestedSets.MigrationTest do
 
         create_table(repo, table, fn ->
           quote do
-            NestedSets.Migration.nested_sets_fields()
+            NestedSets.Migration.nested_sets_columns()
           end
         end)
 
@@ -41,7 +41,7 @@ defmodule NestedSets.MigrationTest do
 
         create_table(repo, table, fn ->
           quote do
-            NestedSets.Migration.nested_sets_fields(use_tree: true)
+            NestedSets.Migration.nested_sets_columns(use_tree: true)
           end
         end)
 
@@ -63,7 +63,7 @@ defmodule NestedSets.MigrationTest do
 
         create_table(repo, table, fn ->
           quote do
-            NestedSets.Migration.nested_sets_fields(use_tree: :organization_id)
+            NestedSets.Migration.nested_sets_columns(use_tree: :organization_id)
           end
         end)
 
@@ -83,7 +83,7 @@ defmodule NestedSets.MigrationTest do
 
         create_table(repo, table, fn ->
           quote do
-            NestedSets.Migration.nested_sets_fields(use_tree: :tenant_id, tree_null: false)
+            NestedSets.Migration.nested_sets_columns(use_tree: :tenant_id, tree_null: false)
           end
         end)
 
@@ -108,7 +108,7 @@ defmodule NestedSets.MigrationTest do
 
         create_table(repo, table, fn ->
           quote do
-            NestedSets.Migration.nested_sets_fields(
+            NestedSets.Migration.nested_sets_columns(
               use_tree: :organization_id,
               tree_type: :id,
               tree_references: unquote(ref_table)
@@ -140,7 +140,7 @@ defmodule NestedSets.MigrationTest do
 
         create_table(repo, table, fn ->
           quote do
-            NestedSets.Migration.nested_sets_fields(use_tree: false)
+            NestedSets.Migration.nested_sets_columns(use_tree: false)
           end
         end)
 
@@ -158,7 +158,7 @@ defmodule NestedSets.MigrationTest do
 
         create_table(repo, table, fn ->
           quote do
-            NestedSets.Migration.nested_sets_fields(use_tree: nil)
+            NestedSets.Migration.nested_sets_columns(use_tree: nil)
           end
         end)
 
@@ -175,7 +175,7 @@ defmodule NestedSets.MigrationTest do
 
         def change do
           create table(:test_invalid) do
-            NestedSets.Migration.nested_sets_fields(use_tree: 123)
+            NestedSets.Migration.nested_sets_columns(use_tree: 123)
           end
         end
       end
@@ -194,7 +194,7 @@ defmodule NestedSets.MigrationTest do
 
         def change do
           create table(:test_missing_ref) do
-            NestedSets.Migration.nested_sets_fields(use_tree: :org_id, tree_type: :id)
+            NestedSets.Migration.nested_sets_columns(use_tree: :org_id, tree_type: :id)
           end
         end
       end
@@ -213,10 +213,10 @@ defmodule NestedSets.MigrationTest do
     :"#{prefix}_#{System.unique_integer([:positive])}"
   end
 
-  defp create_table(repo, table_name, fields_fn) do
+  defp create_table(repo, table_name, columns_fn) do
     reset_migrations!(repo)
 
-    fields_ast = fields_fn.()
+    columns_ast = columns_fn.()
 
     migration_module_name =
       String.to_atom("Elixir.NestedSets.TestMigration#{System.unique_integer([:positive])}")
@@ -232,7 +232,7 @@ defmodule NestedSets.MigrationTest do
           def change do
             create table(unquote(table_name)) do
               add :name, :string
-              unquote(fields_ast)
+              unquote(columns_ast)
             end
           end
         end,
@@ -331,8 +331,8 @@ defmodule NestedSets.MigrationTest do
         %{name: name, type: normalize_type(type, :postgres), nullable: nullable == "YES"}
 
       Ecto.Adapters.SQLite3 ->
-        [_cid, name, type, notnull, _default, _pk] = row
-        %{name: name, type: normalize_type(type, :sqlite), nullable: notnull == 0}
+        [_cid, name, type, not_null, _default, _pk] = row
+        %{name: name, type: normalize_type(type, :sqlite), nullable: not_null == 0}
 
       Ecto.Adapters.MyXQL ->
         [name, type, nullable] = row

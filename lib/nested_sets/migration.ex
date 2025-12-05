@@ -26,7 +26,7 @@ defmodule NestedSets.Migration do
 
   use Ecto.Migration
 
-  defmacro nested_sets_fields(opts \\ []) do
+  defmacro nested_sets_columns(opts \\ []) do
     quote bind_quoted: [opts: opts] do
       add :lft, :integer, null: false
       add :rgt, :integer, null: false

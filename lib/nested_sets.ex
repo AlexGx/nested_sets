@@ -66,6 +66,9 @@ defmodule NestedSets do
   @type depth :: non_neg_integer() | nil
   @type delete_result :: {:ok, non_neg_integer()} | {:error, error_reason()}
 
+  @typep position :: :prepend | :append | :before | :after
+  @typep validation_result :: :ok | {:error, String.t()}
+
   @doc false
   def config(node) when is_struct(node), do: config(node.__struct__)
 
@@ -179,7 +182,9 @@ defmodule NestedSets do
 
       {:ok, count} = NestedSets.delete_with_children(Repo, node)
   """
-  @spec delete_with_children(Ecto.Repo.t(), ns_node()) :: {:ok, integer()} | {:error, term()}
+
+  @spec delete_with_children(Ecto.Repo.t(), ns_node()) ::
+          {:ok, non_neg_integer()} | {:error, term()}
   def delete_with_children(repo, node) do
     cfg = config(node)
 
@@ -214,6 +219,7 @@ defmodule NestedSets do
   """
   @spec delete_node(Ecto.Repo.t(), ns_node()) :: {:ok, ns_node()} | {:error, term()}
   def delete_node(repo, node) do
+    # @review: root node deletion
     if root?(node) do
       {:error, :cannot_delete_root}
     else
@@ -303,13 +309,13 @@ defmodule NestedSets do
   """
   @spec descendant_of?(ns_node(), ns_node()) :: boolean()
   def descendant_of?(node, potential_parent) do
-    cfg = config(node)
-
     if node.__struct__ != potential_parent.__struct__ do
       raise ArgumentError,
             "descendant_of?/2 expects both arguments to be structs of the same Schema, " <>
               "got #{inspect(node.__struct__)} and #{inspect(potential_parent.__struct__)}"
     end
+
+    cfg = config(node)
 
     node_lft = Map.get(node, cfg.lft)
     node_rgt = Map.get(node, cfg.rgt)
@@ -330,13 +336,13 @@ defmodule NestedSets do
   """
   @spec child_of?(ns_node(), ns_node()) :: boolean()
   def child_of?(node, potential_parent) do
-    cfg = config(node)
-
     if node.__struct__ != potential_parent.__struct__ do
       raise ArgumentError,
             "child_of?/2 expects both arguments to be structs of the same Schema, " <>
               "got #{inspect(node.__struct__)} and #{inspect(potential_parent.__struct__)}"
     end
+
+    cfg = config(node)
 
     same_scope? =
       if cfg.tree != false do
@@ -369,9 +375,6 @@ defmodule NestedSets do
   end
 
   # Private section
-
-  @typep position :: :prepend | :append | :before | :after
-  @typep validation_result :: :ok | {:error, String.t()}
 
   @spec loaded?(ns_node()) :: boolean()
   defp loaded?(%{__meta__: %{state: :loaded}}), do: true

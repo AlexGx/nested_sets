@@ -9,7 +9,7 @@ defmodule NestedSets.Test.SqliteRepo.Migrations.CreateTestTables do
       add :name, :string, null: false
       add :active, :boolean, default: true, null: false
 
-      nested_sets_fields()
+      nested_sets_columns()
 
       timestamps()
     end
@@ -21,7 +21,7 @@ defmodule NestedSets.Test.SqliteRepo.Migrations.CreateTestTables do
       add :name, :string, null: false
       add :active, :boolean, default: true, null: false
 
-      nested_sets_fields(use_tree: true)
+      nested_sets_columns(use_tree: true)
 
       timestamps()
     end
