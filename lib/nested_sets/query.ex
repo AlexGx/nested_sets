@@ -199,7 +199,6 @@ defmodule NestedSets.Query do
     node_lft = Map.get(node, cfg.lft)
     node_rgt = Map.get(node, cfg.rgt)
     node_depth = Map.get(node, cfg.depth)
-    pk = get_primary_key(node)
 
     parent_query =
       from(n in queryable,
@@ -209,10 +208,13 @@ defmodule NestedSets.Query do
         limit: 1
       )
 
+    [pk_field | _] = schema.__schema__(:primary_key)
+    pk = Map.get(node, pk_field)
+
     parent_query = apply_tree_filter(parent_query, node, cfg)
 
     from(n in queryable,
-      where: n.id != ^pk,
+      where: field(n, ^pk_field) != ^pk,
       where: field(n, ^cfg.depth) == ^node_depth,
       where: field(n, ^cfg.lft) > subquery(from(p in parent_query, select: field(p, ^cfg.lft))),
       where: field(n, ^cfg.rgt) < subquery(from(p in parent_query, select: field(p, ^cfg.rgt))),
@@ -321,11 +323,5 @@ defmodule NestedSets.Query do
   defp apply_tree_filter(query, node, %{tree: tree_attr} = _cfg) do
     tree_value = Map.get(node, tree_attr)
     from(n in query, where: field(n, ^tree_attr) == ^tree_value)
-  end
-
-  defp get_primary_key(node) do
-    schema = node.__struct__
-    [pk_field | _] = schema.__schema__(:primary_key)
-    Map.get(node, pk_field)
   end
 end
