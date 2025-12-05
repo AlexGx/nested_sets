@@ -211,7 +211,8 @@ defmodule NestedSets do
   end
 
   @doc """
-  Deletes a single node, promoting its children up one level.
+  Deletes a single non-root node, promoting its children up one level.
+  For root node deletions always use delete_with_children/2 even if it has no children.
 
   ## Examples
 
@@ -219,9 +220,8 @@ defmodule NestedSets do
   """
   @spec delete_node(Ecto.Repo.t(), ns_node()) :: {:ok, ns_node()} | {:error, term()}
   def delete_node(repo, node) do
-    # @review: root node deletion
-    if root?(node) and has_child?(node) do
-      {:error, :cannot_delete_non_empty_root}
+    if root?(node) do
+      {:error, :cannot_delete_root}
     else
       do_delete_node(repo, node)
     end
@@ -305,13 +305,13 @@ defmodule NestedSets do
   end
 
   @doc """
-  Checks if a node has at least one child.
+  Checks if a node has at least one child. Opposite to leaf?/1.
   """
   @spec has_child?(ns_node()) :: boolean()
   def has_child?(node), do: not leaf?(node)
 
   @doc """
-  Checks if node is a child/descendant of the potential parent.
+  Checks if node is a child (descendant) of the potential parent.
   """
   @spec descendant_of?(ns_node(), ns_node()) :: boolean()
   def descendant_of?(node, potential_parent) do
@@ -694,14 +694,4 @@ defmodule NestedSets do
     [pk_field | _] = schema.__schema__(:primary_key)
     Map.get(node, pk_field)
   end
-
-  # NOTE: composite keys not supported (is anyone needed it?), prototype below:
-  # defp get_pk_field(schema) do
-  #   [pk_field | _] = schema.__schema__(:primary_key)
-  #   pk_field
-  # end
-
-  # defp get_pk_val(node) do
-  #   Map.get(node, get_pk_field(node.__struct__))
-  # end
 end
