@@ -220,8 +220,8 @@ defmodule NestedSets do
   @spec delete_node(Ecto.Repo.t(), ns_node()) :: {:ok, ns_node()} | {:error, term()}
   def delete_node(repo, node) do
     # @review: root node deletion
-    if root?(node) do
-      {:error, :cannot_delete_root}
+    if root?(node) and has_child?(node) do
+      {:error, :cannot_delete_non_empty_root}
     else
       do_delete_node(repo, node)
     end
@@ -303,6 +303,12 @@ defmodule NestedSets do
     cfg = config(node)
     Map.get(node, cfg.rgt) - Map.get(node, cfg.lft) == 1
   end
+
+  @doc """
+  Checks if a node has at least one child.
+  """
+  @spec has_child?(ns_node()) :: boolean()
+  def has_child?(node), do: not leaf?(node)
 
   @doc """
   Checks if node is a child/descendant of the potential parent.

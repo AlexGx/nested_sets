@@ -147,9 +147,9 @@ defmodule NestedSets.DeleteTest do
       end
 
       @tag db: db_type
-      test "prevents deleting the root node (#{db_type})", %{nodes: nodes, repo: repo} do
+      test "prevents deleting the root node if it has any child (#{db_type})", %{nodes: nodes, repo: repo} do
         target = nodes["Root"]
-        assert {:error, :cannot_delete_root} = NestedSets.delete_node(repo, target)
+        assert {:error, :cannot_delete_non_empty_root} = NestedSets.delete_node(repo, target)
 
         # ensure nothing changed
         assert repo.aggregate(Category, :count) == 6
