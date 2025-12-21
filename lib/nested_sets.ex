@@ -212,7 +212,7 @@ defmodule NestedSets do
 
   @doc """
   Deletes a single non-root node, promoting its children up one level.
-  For root node deletions always use delete_with_children/2 even if it has no children.
+  For root node deletions always use `delete_with_children/2` even if it has no children.
 
   ## Examples
 
@@ -305,7 +305,7 @@ defmodule NestedSets do
   end
 
   @doc """
-  Checks if a node has at least one child. Opposite to leaf?/1.
+  Checks if a node has at least one child. Opposite to `leaf?/1`.
   """
   @spec has_child?(ns_node()) :: boolean()
   def has_child?(node), do: not leaf?(node)

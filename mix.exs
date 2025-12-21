@@ -7,7 +7,7 @@ defmodule NestedSets.MixProject do
   def project do
     [
       app: :nested_sets,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.16",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -64,7 +64,9 @@ defmodule NestedSets.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       "test.setup": ["ecto.drop --quiet", "ecto.create", "ecto.migrate"],
-      lint: ["format", "dialyzer"]
+      lint: ["format", "dialyzer"],
+      "cover.html": ["cmd MIX_ENV=test mix coveralls.html"],
+      "cover.html.open": ["cover.html", "cmd open cover/excoveralls.html"]
     ]
   end
 
